@@ -1,0 +1,19 @@
+# Environment variables
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE settings (optional but recommended)
+.vscode/
+.idea/
+
+#venv
+infohealth
