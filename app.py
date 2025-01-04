@@ -1,11 +1,16 @@
 import streamlit as st
 from typing import Dict, TypedDict
 from agent import *
-from BRZA import *
+from BZRA import bzra_tasks
+from AHG import ahg_tasks
+from AP import ap_tasks
+from CHEI import chei_tasks
+from PPI import ppi_tasks
 
 def initialize_session_state():
     if 'state' not in st.session_state:
         st.session_state.state = initial_state
+        st.session_state.state['tasks'] = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks}
     if 'conversation_ended' not in st.session_state:
         st.session_state.conversation_ended = False
 
@@ -18,9 +23,6 @@ def main():
     
     # Initialize session state
     initialize_session_state()
-    
-    # Create two columns for layout
-    #col1, col2 = st.columns([1, 2])
     
     st.subheader("Agent State")
 
@@ -64,8 +66,8 @@ def main():
                 messages=[{"role":"system", "content":""},
                         {"role":"assistant", "content": "Hello! To assist you today, could you please tell me what medication you're taking?"}],  # Sequence of BaseMessage objects
                 user_data={},
-                curr_node=medication_task,  # The current AgentNode
-                tasks = tasks,
+                curr_node=medication_task,
+                tasks = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks},
                 total_tokens=0
             )
             st.rerun()

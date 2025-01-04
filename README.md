@@ -2,6 +2,14 @@
 
 A conversational AI system designed to assist patients with medication management and deprescription guidance. The agent follows medical protocols and guidelines to provide personalized advice while ensuring patient safety.
 
+## To do:
+- Add logging in the LLM call functions 
+- Implement validation tests
+- Implement railguard with async calling with extraction chain
+- Implement tree for AC meds
+- Change workflow input to take user's list of meds.
+
+
 ## Features
 - Structured conversation flows based on medical protocols
 - Safe and controlled responses for medication guidance
