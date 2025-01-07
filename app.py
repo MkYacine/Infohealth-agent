@@ -1,28 +1,55 @@
 import streamlit as st
-from typing import Dict, TypedDict
 from agent import *
 from BZRA import bzra_tasks
 from AHG import ahg_tasks
 from AP import ap_tasks
 from CHEI import chei_tasks
 from PPI import ppi_tasks
+from agent_logger import *
+from datetime import datetime
+
 
 def initialize_session_state():
-    if 'state' not in st.session_state:
-        st.session_state.state = initial_state
-        st.session_state.state['tasks'] = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks}
-    if 'conversation_ended' not in st.session_state:
-        st.session_state.conversation_ended = False
+    st.session_state.state = AgentState(
+            messages=[{"role":"system", "content":""},
+                    {"role":"assistant", "content": "Hello! To assist you today, could you please tell me what medication you're taking?"}],  # Sequence of BaseMessage objects
+            user_data={},
+            curr_node=medication_task,
+            tasks = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks},
+            total_tokens=0
+        )
+    st.session_state.logger = AgentLogger(datetime.now().isoformat()[:-7])
 
-def reset_conversation():
-    st.session_state.state = initial_state
-    st.session_state.conversation_ended = False
+
+def check_password():
+    """Returns `True` if the user had the correct password."""
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == st.secrets["password"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Don't store the password
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show input for password
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        return False
+    
+    return st.session_state["password_correct"]
+
 
 def main():
+    if not check_password():
+        st.stop()  # Do not continue if check_password is not True
+        
     st.title("Infohealth Agent Demo")
     
     # Initialize session state
-    initialize_session_state()
+    if 'state' not in st.session_state:
+        initialize_session_state()
     
     st.subheader("Agent State")
 
@@ -51,31 +78,17 @@ def main():
     
     
     # User input section
-    if not st.session_state.conversation_ended:
-        user_input = st.text_input("Your message:")
-        
-        if st.button("Send") and user_input:
-            # Append user message before processing
-            process_user_input(user_input, st.session_state.state)
-            
-            
-            # Rerun to update the display
-            st.rerun()
-        if st.button("Reset Conversation"):
-            st.session_state.state = AgentState(
-                messages=[{"role":"system", "content":""},
-                        {"role":"assistant", "content": "Hello! To assist you today, could you please tell me what medication you're taking?"}],  # Sequence of BaseMessage objects
-                user_data={},
-                curr_node=medication_task,
-                tasks = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks},
-                total_tokens=0
-            )
-            st.rerun()
-    else:
-        st.success("Conversation completed!")
-        if st.button("Start New Conversation"):
-            reset_conversation()
-            st.rerun()
+    user_input = st.text_input("Your message:")
+    
+    if st.button("Send") and user_input:
+        # Process user input
+        process_user_input(user_input, st.session_state.state, st.session_state.logger)
+        # Rerun to update the display
+        st.rerun()
+    if st.button("Reset Conversation"):
+        initialize_session_state()
+        st.rerun()
+
 
 if __name__ == "__main__":
     main()

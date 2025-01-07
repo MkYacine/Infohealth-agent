@@ -118,7 +118,7 @@ reason_task = AgentNode(desc = 'Find out the reason for taking the medication. I
                         acceptable = {"Conditions A": "Barretts esophagus, Chronic NSAID users with bleeding risk, Severe esophagitis, Documented history of bleeding GI ulcer",
                                       "Conditions B": "Peptic Ulcer Disease treated x 2-12 weeks (from NSAID; H. pylori), Upper Gl symptoms without endoscopy; asymptomatic for 3 consecutive days, ICU stress ulcer prophylaxis treated beyond ICU admission, Uncomplicated H. pylori treated x 2 weeks and asymptomatic",
                                       "Conditions C": "Mild to moderate esophagitis, or GERD treated x 4-8 weeks (esophagitis healed, symptoms controlled)",
-                                      "Unknown": "The user explicity states they do not know why."
+                                      "Unknown": "The agent has fully inquiried about the user's history of endoscopy, hospitalization, chronic NSAID, heartburn and dyspepsia, but the medical condition is still unknown."
                                      })
 
 deprescribing1_task = AgentNode(desc = deprescribe1,

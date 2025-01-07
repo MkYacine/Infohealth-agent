@@ -1,5 +1,5 @@
 # Environment variables
-.env
+.streamlit
 
 # Python cache files
 __pycache__/
@@ -17,3 +17,6 @@ __pycache__/
 
 #venv
 infohealth
+
+# firebase creds
+infohealth-129cc-firebase-adminsdk-tpo7x-b1fb03b1a6.json
