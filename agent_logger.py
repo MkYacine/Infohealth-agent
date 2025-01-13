@@ -101,3 +101,31 @@ class AgentLogger:
 
         except Exception as e:
             st.error(f"Failed to log completion: {str(e)}")
+
+    def log_flag(self, messages: List[Dict[str, str]], flagged_index: int) -> None:
+        """Log flagged messages to Firestore.
+        
+        Args:
+            messages: List of all messages in the conversation
+            flagged_index: Index of the flagged message in the messages list
+        """
+        if not self.db:
+            return
+            
+        try:
+            # Get reference to the conversation's flags collection
+            flags_collection = self.db.collection('flagged').document(self.conversation_id).collection('flags')
+        
+            
+            # Add timestamp and create document
+            data = {
+                'timestamp': datetime.now(),
+                'full_conversation': messages,
+                'flagged_message_index': flagged_index
+            }
+            
+            # Add a new document to the flags subcollection
+            flags_collection.add(data)
+
+        except Exception as e:
+            st.error(f"Failed to log flagged message: {str(e)}")

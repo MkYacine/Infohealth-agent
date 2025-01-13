@@ -68,12 +68,21 @@ def main():
 
     st.subheader("Conversation")
     # Display conversation history
-    for msg in st.session_state.state['messages'][1:]:  # Skip system message
+    for idx, msg in enumerate(st.session_state.state['messages'][1:], 1):
         if msg['role'] == 'assistant':
-            st.write("🤖 Assistant: " + msg['content'])
+            if idx > 1:  # Skip the first assistant message
+                col1, col2 = st.columns([0.9, 0.1])
+                with col1:
+                    st.write("🤖 Assistant: " + msg['content'])
+                with col2:
+                    if st.button("🚩", key=f"flag_{idx}"):
+                        st.session_state.logger.log_flag(st.session_state.state['messages'], idx)
+            else:
+                # Just display the first assistant message without a flag button
+                st.write("🤖 Assistant: " + msg['content'])
         else:
             st.write("👤 User: " + msg['content'])
-    
+        
 
     
     
