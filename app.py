@@ -5,6 +5,7 @@ from AHG import ahg_tasks
 from AP import ap_tasks
 from CHEI import chei_tasks
 from PPI import ppi_tasks
+from AC import ac_tasks
 from agent_logger import *
 from datetime import datetime
 
@@ -15,7 +16,7 @@ def initialize_session_state():
                     {"role":"assistant", "content": "Hello! To assist you today, could you please tell me what medication you're taking?"}],  # Sequence of BaseMessage objects
             user_data={},
             curr_node=medication_task,
-            tasks = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks},
+            tasks = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks, 'AC': ac_tasks},
             total_tokens=0
         )
     st.session_state.logger = AgentLogger(datetime.now().isoformat()[:-7])

@@ -1,6 +1,6 @@
 import requests
 import json
-from typing import Dict, TypedDict
+from typing import Dict, TypedDict, Callable
 import streamlit as st
 
 api_key = st.secrets["LAMBDA_API_KEY"]
@@ -98,6 +98,7 @@ class AgentNode(TypedDict):
     prerequisites: dict[str, str] | list[dict[str, str]] # Prerequisite data needed before entering this node 
     success: str | None # Key in user_data that determines that this node has been filled
     acceptable: dict[str, str] | None # Values that we'll accept for our key.
+    preprocess: Callable | None
 
 
 # Define the state structure
@@ -147,6 +148,8 @@ def process_user_input(msg, state, logger):
         if extract_resp != 'Unsure':
             field = state['curr_node']['success']
             state['user_data'][field] = extract_resp
+            print(state['user_data'])
+            print(extract_output)
         else:
             #print("No data extracted.")
             pass
@@ -168,6 +171,8 @@ def process_user_input(msg, state, logger):
 
     if next_node:
         state['curr_node'] = next_node
+        if next_node.get('preprocess'):
+            next_node['preprocess'](state)
 
     if state['curr_node']['acceptable']:
         acceptable = format_acceptable(state['curr_node']['acceptable'])
@@ -193,13 +198,13 @@ def get_next_node(user_data: Dict, tasks) -> str:
             # For each config, count matching keys and track the best
             for config in prereqs:
                 matches = sum(1 for k, v in config.items() 
-                            if k in user_data and user_data[k] == v)
+                            if k in user_data and v in user_data[k])
                 if matches > max_matches and matches == len(config):
                     max_matches = matches
                     best_match = task
         else:
             matches = sum(1 for k, v in prereqs.items() 
-                         if k in user_data and user_data[k] == v)
+                         if k in user_data and v in user_data[k])
             if matches > max_matches and matches == len(prereqs):
                 max_matches = matches
                 best_match = task
@@ -214,7 +219,7 @@ medication_task = AgentNode(desc = 'Find out what medication the user is taking'
                                      "AP": "User is taking Antipsychotics, one of the following: Chlorpromazine, Haloperidol (Haldol), Loxapine (Xylac, Loxapac), Aripiprazole (Abilify), Clozapine (Clozaril), Olanzapine (Zyprexa), Paliperidone (Invega), Quetiapine (Seroquel), Risperidone (Risperdal)",
                                      "CHEI": "User is taking Cholinesterase Inhibitor or Memantine, one of the following:  Donepezil (Aricept, Aridon, Arazil),  Galantamine (Galantyl, Gamine XR, Reminyl), Rivastigmine (Exelon), Memantine (Ebixa, Memanxa).",
                                      "PPI": "User is taking Proton Pump Inhibitors, one of the following: Omeprazole (Losec), Esomeprazole (Nexium), Dexlansoprazole (Dexilant), Pantoprazole (Tecta, Pantoloc), Rabeprazole (Pariet)",
-                                     "AC": "User is taking Anticholinergics"
+                                     "AC": "User is taking Anticholinergics, one of the following: Oxybutynin (Ditropan), Solifenacin, Tolterodine (Detrusitol), Darifenacin (Emselex), Propantheline (Pro-banthine)"
                                     })
 
 
@@ -251,7 +256,7 @@ To apporach this, briefly identify relevant information in the conversation, com
 You should not make any assumptions or any calculated guesses. 
 If the user's answer isn't explicit or is broad, or you find yourself making guesses and requiring further clarifications, you must play it safe and classify the information as 'Unsure'. Further clarifications will be provided in such cases.
 
-Output format: {{"answer": "selected_answer", "reasoning": "your reasoning"}}"""
+Output format: {{"reasoning": "your reasoning", "answer": "selected_answer"}}"""
 
 RAILGUARD = """
 You are a railguard agent.
