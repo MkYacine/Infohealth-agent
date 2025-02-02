@@ -1,11 +1,11 @@
 import streamlit as st
 from agent import *
-from BZRA import bzra_tasks
-from AHG import ahg_tasks
-from AP import ap_tasks
-from CHEI import chei_tasks
-from PPI import ppi_tasks
-from AC import ac_tasks
+from workflows.BZRA import bzra_tasks
+from workflows.AHG import ahg_tasks
+from  workflows.AP import ap_tasks
+from  workflows.CHEI import chei_tasks
+from  workflows.PPI import ppi_tasks
+from  workflows.AC import ac_tasks
 from agent_logger import *
 from datetime import datetime
 
@@ -17,7 +17,8 @@ def initialize_session_state():
             user_data={},
             curr_node=medication_task,
             tasks = {'BZRA': bzra_tasks, 'AHG': ahg_tasks, 'AP': ap_tasks, 'CHEI': chei_tasks, 'PPI': ppi_tasks, 'AC': ac_tasks},
-            total_tokens=0
+            total_tokens=0,
+            finished=False
         )
     st.session_state.logger = AgentLogger(datetime.now().isoformat()[:-7])
 
@@ -88,13 +89,25 @@ def main():
     
     
     # User input section
-    user_input = st.text_input("Your message:")
-    
-    if st.button("Send") and user_input:
-        # Process user input
-        process_user_input(user_input, st.session_state.state, st.session_state.logger)
-        # Rerun to update the display
-        st.rerun()
+    if not st.session_state.state.get('finished', False):
+        user_input = st.text_input("Your message:")
+        
+        if st.button("Send") and user_input:
+            # Process user input
+            process_user_input(user_input, st.session_state.state, st.session_state.logger)
+            # Rerun to update the display
+            st.rerun()
+    else:
+        # Display download button for report when conversation is finished
+        if 'report_doc' in st.session_state.state:
+            st.download_button(
+                label="Download Report",
+                data=st.session_state.state['report_doc'],
+                file_name="deprescribing_report.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+        st.info("This conversation has ended. Click 'Reset Conversation' to start a new one.")
+
     if st.button("Reset Conversation"):
         initialize_session_state()
         st.rerun()
