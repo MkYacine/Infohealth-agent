@@ -63,7 +63,7 @@ reason_task = AgentNode(desc = 'Find out the reason for taking BZRA',
                         prerequisites = {'medication': 'BZRA'},
                         success = 'reason',
                         acceptable = {"Insomnia": "Taken BZRA mainly for insomnia ", 
-                                      "Not insomnia": "Other sleeping disorders, unmanaged anxiety, depression, physical or mental condition that may be causign or aggravating insomnia, Benzodiazepine effective specifically for anxiety, alcohol withdrawal"
+                                      "Not insomnia": "Other sleeping disorders, unmanaged anxiety, depression, physical or mental condition that may be causing or aggravating insomnia, Benzodiazepine effective specifically for anxiety, alcohol withdrawal"
                                      })
 
 comorbidities_task = AgentNode(desc = 'Find out if the user has any underlying mental comorbidities (anxiety, depression, etc...) , AND determine if they are managed or unmanaged',

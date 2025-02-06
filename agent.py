@@ -4,11 +4,15 @@ from typing import Dict, TypedDict, Callable
 import streamlit as st
 from docxtpl import DocxTemplate
 from io import BytesIO
+
 api_key = st.secrets["LAMBDA_API_KEY"]
 
+with open('meds_dict.json', 'r') as f:
+    meds_map = json.load(f)
+    meds_list = [k for k,_ in meds_map.items()]
 
-static_output = {'Positive': 'Thank you for taking the time to complete this assessment. The medication you are currently taking could be a suitable candidate for deprescribing. I will produce a referral letter that you can take to your doctor to discuss the next steps. Your referall letter will be available shortly, in the documents section of your account dashboard. Please remember, under NO circumstances should you STOP or WITHDRAW your medication, until you have discussed the report with your doctor. Thanks, and have a great day!',
-                 'Negative': 'Thank you for taking the time to complete this assessment, your medication is not a suitable candidate for deprescribing. You should continue taking your medication as prescribed. Thanks, and have a great day!'}
+static_output = {'Positive': 'That answers all my questions!\nThank you for taking the time to complete this assessment. The medication you are currently taking could be a suitable candidate for deprescribing. I will produce a referral letter that you can take to your doctor to discuss the next steps. Your referall letter will be available shortly, in the documents section of your account dashboard. Please remember, under NO circumstances should you STOP or WITHDRAW your medication, until you have discussed the report with your doctor. Thanks, and have a great day!',
+                 'Negative': 'That answers all my questions!\nThank you for taking the time to complete this assessment, your medication is not a suitable candidate for deprescribing. You should continue taking your medication as prescribed. Thanks, and have a great day!'}
 
 
 def prompt_llm_completion(prompt):
@@ -135,6 +139,30 @@ def format_conv(messages: dict) -> str:
         else:
             out += f'{m['role']}: {m['content']}\n'
     return out
+
+def calc_acb(state):
+    user_meds = state['user_data']['meds'].strip('[]').replace("'", '').split(', ')
+    state['user_data']['acb'] = {'total': 0}
+    state['user_data']['acb_evaluation'] = 'Low'
+    for m in user_meds:
+        score = int(meds_map[m])
+        if score > 1:
+            state['user_data']['acb_evaluation'] = 'High'
+        state['user_data']['acb'][m] = score
+        state['user_data']['acb']['total'] += score
+    if state['user_data']['acb']['total'] > 2:
+        state['user_data']['acb_evaluation'] = 'High'
+
+    if state['user_data']['acb_evaluation'] == 'High':
+        injec = f"User's ACB score is too high. Tell the user to refer to clinician for an anticholinergic deprescribing assessment. Detailed report: {str(state['user_data']['acb'])}"
+        if state['curr_node']['desc'] == "":
+            state['curr_node']['desc'] = "Positive"
+    else:
+        injec = f"User's ACB score is below the acceptable threshold. Detailed report: {str(state['user_data']['acb'])}"
+        if state['curr_node']['desc'] == "":
+            state['curr_node']['desc'] = "Negative"
+    state['curr_node']['desc'].format(acb=injec)
+
     
 def process_user_input(msg, state, logger):
     state['messages'].append({"role":"user", "content":msg})
@@ -216,7 +244,6 @@ def generate_report(user_data) -> str:
     context = {
         "meds_list": user_data['meds_reason'],
         "medication": user_data['medication'],
-        "appendix_b": "ABC"
     }
     
     # Render the template with the context
@@ -259,10 +286,8 @@ medication_task = AgentNode(desc = 'Find out what medication the user wants an a
                                      "AP": "User is taking Antipsychotics, one of the following: Chlorpromazine, Haloperidol (Haldol), Loxapine (Xylac, Loxapac), Aripiprazole (Abilify), Clozapine (Clozaril), Olanzapine (Zyprexa), Paliperidone (Invega), Quetiapine (Seroquel), Risperidone (Risperdal)",
                                      "CHEI": "User is taking Cholinesterase Inhibitor or Memantine, one of the following:  Donepezil (Aricept, Aridon, Arazil),  Galantamine (Galantyl, Gamine XR, Reminyl), Rivastigmine (Exelon), Memantine (Ebixa, Memanxa).",
                                      "PPI": "User is taking Proton Pump Inhibitors, one of the following: Omeprazole (Losec), Esomeprazole (Nexium), Dexlansoprazole (Dexilant), Pantoprazole (Tecta, Pantoloc), Rabeprazole (Pariet)",
-                                     "AC": "User is taking Anticholinergics, one of the following: Oxybutynin (Ditropan), Solifenacin, Tolterodine (Detrusitol), Darifenacin (Emselex), Propantheline (Pro-banthine)"
+                                     "AC": "User is taking Anticholinergics, one of the following: Oxybutynin (Ditropan), Solifenacin, Tolterodine (Detrusitol), Darifenacin (Emselex), Propantheline (Pro-banthine)",
                                     })
-
-
 
 ### SYSTEM PROMPTS
 ASSIST = """
